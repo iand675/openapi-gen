@@ -109,7 +109,7 @@ executables:
 
 tests:
   openapi-gen-test:
-    main:                Spec.hs
+    main:                Driver.hs
     source-dirs:         test
     ghc-options:
     - -threaded
@@ -117,3 +117,10 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - openapi-gen
+    - tasty
+    - tasty-discover
+    - tasty-hspec
+    - tasty-hunit
+    - tasty-quickcheck
+    - aeson
+    - aeson-qq
