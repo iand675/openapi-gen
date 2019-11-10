@@ -1,0 +1,2 @@
+{% for response in responses %}{% for contentType in response.value.content %}Response {{response.key}} "{{contentType.key}}" {% include "deref.ede" with schema=contentType.value.schema %}{% if !response.last %} :<|>
+     {% endif %}{% endfor %}{% endfor %}

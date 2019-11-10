@@ -1,0 +1,4 @@
+.stack-work/
+openapi-gen.cabal
+*~
+dist-newstyle/

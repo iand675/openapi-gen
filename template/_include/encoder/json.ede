@@ -1,0 +1,27 @@
+instance ToJSON {{type.value.typeName}} where
+  {% for constructor in type.value.constructors %}
+  toJSON {{constructor.value.constructorName}}{% if (constructor.value.constructorFields | length) > 0 %}{..}{% endif %} = object
+    (
+      {% for field in constructor.value.constructorFields %}
+      {% if field.value.fieldNullable %}
+      (fmap ("{{field.value.fieldOriginalName}}" .=) {{field.value.fieldName}}) >?>
+      {% else %}
+      ("{{field.value.fieldOriginalName}}" .= {{field.value.fieldName}}) :
+      {% endif %}
+      {% endfor %}
+      []
+    )
+  {% endfor %}
+  {% for constructor in type.value.constructors %}
+  toEncoding {{constructor.value.constructorName}}{% if (constructor.value.constructorFields | length) > 0 %}{..}{% endif %} = pairs (
+      {% for field in constructor.value.constructorFields %}
+      {% if field.value.fieldNullable %}
+      maybe mempty ("{{field.value.fieldOriginalName}}" .=) {{field.value.fieldName}}{% if !field.last %} <>{% endif %}
+      {% else %}
+      "{{field.value.fieldOriginalName}}" .= {{field.value.fieldName}}{% if !field.last %} <>{% endif %}
+      {% endif %}
+      {% else %}
+      mempty
+      {% endfor %}
+      )
+  {% endfor %}

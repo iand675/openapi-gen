@@ -1,0 +1,68 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE PolyKinds #-}
+-- Derived from OpenAPI spec
+module {{ moduleName }} where
+
+-- TODO all of this needs to be qualified to account for generated output causing conflicts
+import Control.Applicative ((<|>))
+import Data.Aeson (ToJSON1(..), FromJSON1(..), toJSON1, parseJSON1, Value(..))
+import Data.Data (Data(..))
+import Data.Functor.Const
+import qualified Data.Sum
+import GHC.Generics (Generic)
+import OpenAPI.Support hiding (Error(..))
+import OpenAPI.Support.Stripe
+
+-- TODO All objects going into qery string need instance of QueryValueLike based on parameter format
+
+
+{% for enum in enums %}
+data {{enum.value.name}}
+  {% for option in enum.value.options %}
+  {% if option.first %}= {% else %}| {% endif %}{{option.value.name}}
+  {% endfor %}
+  deriving (Show, Eq, Ord, Enum, Bounded, Generic)
+
+instance ToJSON {{enum.value.name}} where
+  toJSON e = String $ case e of
+  {% for option in enum.value.options %}
+    {{option.value.name}} -> "{{option.value.original}}"
+  {% endfor %}
+
+instance FromJSON {{enum.value.name}} where
+  parseJSON = withText "{{enum.value.name}}" $ \case
+  {% for option in enum.value.options %}
+    "{{option.value.original}}" -> pure {{option.value.name}}
+  {% endfor %}
+    str -> fail (show str <> " is not a known valid option for {{enum.value.name}}")
+
+{% endfor %}
+
+{% for type in types %}
+{% let haskellName = type.value.typeName %}
+-- Describes: "{{type.value.typeOriginalName}}"
+{% if type.value.typeDescription %}{- | {{type.value.typeDescription}} -}{% endif %}
+data {{type.value.typeName}}
+  {% for constructor in type.value.constructors %}
+  {% if constructor.first %}= {% else %}| {% endif %}{{constructor.value.constructorName}}
+    {% for field in constructor.value.constructorFields %}
+    {% if field.first %}{ {% else %}, {% endif %}{{field.value.fieldName}} :: {{field.value.fieldType}}{% if field.value.fieldDescription %}
+    {- ^ {{field.value.fieldDescription}} -}{% endif %}
+    {% else %}
+    {
+    {% endfor %}
+    } deriving (Show, Eq, Generic)
+  {% endfor %}
+
+{% for coding in type.value.instances %}
+{{coding.value}}
+{% endfor %}
+
+{% endlet %}
+{% endfor %}

@@ -1,0 +1,113 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RankNTypes #-}
+module Stripe.Endpoints where
+import GHC.Generics
+import OpenAPI.Support
+import Stripe.Types
+
+{% for endpoint in endpoints %}
+{% let typeName = endpoint.value.endpointName | toPascal %}
+{% let fieldPrefix = endpoint.value.endpointName | toCamel %}
+{- | {{endpoint.value.endpointDescription}}
+
+> -- Equivalent to the following API endpoint:
+> {{endpoint.value.endpointMethod | toUpper}} {{endpoint.value.endpointPath}}
+-}
+-- TODO request options as enum
+data {{typeName}} = {{typeName}}
+  { {{fieldPrefix}}Params :: {{typeName}}Params
+  , {{fieldPrefix}}Body :: {% if !endpoint.value.endpointRequestBodyRequired %}Maybe {% endif %}{{typeName}}Body
+  } deriving (Show, Eq, Generic)
+
+data {{typeName}}Params = {{typeName}}Params
+{% for param in endpoint.value.endpointParameters %}
+  {% if param.first %}{ {% else %}, {% endif %} {{fieldPrefix}}{{param.value.param.name | toPascal}} :: {% if !param.value.param.required %}Maybe {% endif %}({{param.value.type}}){% if param.value.param.description %}
+  {- ^ {{param.value.param.description}} -}{% endif %}
+{% else %}
+  {
+{% endfor %}
+  } deriving (Show, Eq, Generic)
+
+data {{typeName}}Body
+{% for req in endpoint.value.endpointRequestBodies %}
+  {% if req.first %}= {% else %}| {% endif %}{{typeName}}Body{% if req.length > 1 %}{{req.key | lookupContentTypeSuffix}}{% endif %}
+{% endfor %}
+  deriving (Show, Eq, Generic)
+
+type instance RequestMethod {{typeName}} = "{{endpoint.value.endpointMethod | toUpper}}"
+type instance RequestPath {{typeName}} = "{{endpoint.value.endpointPath}}"
+
+instance RequestBuilder {{typeName}} where
+  endpointMethod _ = "{{endpoint.value.endpointMethod | toUpper}}"
+  -- TODO figure out allowReserved parameter option
+  endpointPath {{typeName}}{..} =
+    {% for segment in endpoint.value.endpointResolvedPath %}
+    {% if segment.first %}[{% else %},{% endif %}{% case segment.value.type %}{% when "const" %} "{{segment.value.raw}}"{% when "named" %} path{{segment.value.param.style | toPascal}}{% if segment.value.param.explode %}Explode{% endif %} {{fieldPrefix}}{{segment.value.param.name | toPascal}}{% endcase %}
+    {% else %}
+    [
+    {% endfor %}
+    ]
+    {% let resolvedLength = endpoint.value.endpointResolvedPath | length %}
+    {% if resolvedLength > 1 %}
+    where
+      {{typeName}}Params{% if (endpoint.value.endpointParameters | length) > 0 %}{..}{% endif %} = {{fieldPrefix}}Params
+    {% endif %}
+    {% endlet %}
+  endpointQuery {{typeName}}{..} =
+    {% for qp in endpoint.value.endpointResolvedQuery %}
+    {% if qp.first %}[{% else %},{% endif %} ("{{qp.value.name}}", query{{qp.value.style | toPascal}}{% if qp.value.explode %}Explode{% endif %} {{fieldPrefix}}{{qp.value.name | toPascal}})
+    {% else %}
+    [
+    {% endfor %}
+    ]
+    {% let resolvedLength = endpoint.value.endpointResolvedQuery | length %}
+    {% if resolvedLength > 1 %}
+    where
+      {{typeName}}Params{% if (endpoint.value.endpointParameters | length) > 0 %}{..}{% endif %} = {{fieldPrefix}}Params
+    {% endif %}
+    {% endlet %}
+  endpointHeaders {{typeName}}{..} =
+    {% for hp in endpoint.value.endpointResolvedHeaders %}
+    {% if hp.first %}[{% else %},{% endif %} ("{{hp.value.name}}", header{{hp.value.style | toPascal}}{% if hp.value.explode %}Explode{% endif %} {{fieldPrefix}}{{hp.value.name | toPascal}})
+    {% else %}
+    [
+    {% endfor %}
+    ]
+    {% let resolvedLength = endpoint.value.endpointResolvedHeaders | length %}
+    {% if resolvedLength > 1 %}
+    where
+      {{typeName}}Params{% if (endpoint.value.endpointParameters | length) > 0 %}{..}{% endif %} = {{fieldPrefix}}Params
+    {% endif %}
+    {% endlet %}
+
+data {{typeName}}Response
+{% for resp in endpoint.value.endpointFlatResponses %}
+  {% if resp.first %}= {% else %}| {% endif %}{{typeName}}Response{{resp.value.suffix}} ({{resp.value.type}})
+{% endfor %}
+
+type instance KnownResponse {{typeName}} = {{typeName}}Response
+
+instance FromHttpResponse {{typeName}}Response where
+  decodeResponse resp
+{% for status in endpoint.value.endpointNestedResponses %}
+    | {{status.key | patternPredicate}} (responseStatus resp) =
+{% include "_include/content-type-match.ede" with match=status.value %}
+{% endfor %}
+    | otherwise = throwError ("Unhandled status code in response." :: String)
+
+{% for status in endpoint.value.endpointNestedResponses %}
+{% for instance in status.value.instances %}
+{{instance.value}}
+{% endfor %}
+{% endfor %}
+
+{-
+{{fieldPrefix}} :: {{typeName}}
+{{fieldPrefix}} = {{typeName}}
+-}
+-- {% if endpoint.value.endpointDeprecated %}{-# DEPRECATED {{fieldPrefix}}, {{typeName}} "This endpoint is deprecated by the API creator" #-}{% endif %}
+{% endlet %}
+{% endlet %}
+{% endfor %}

@@ -1,0 +1,5 @@
+spec: ../stripe-ng/openapi/openapi/spec3.json
+haskell:
+  packageName: stripe-ng
+  rootModule: Stripe
+  outputPath: ../stripe-ng/src/

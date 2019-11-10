@@ -1,0 +1,1 @@
+AnyOf '{% for opt in property.value.anyOf %}{% let treatAsRef = opt.value | isRef %}{% if opt.first %}[{%else%}, {%endif%}{% if treatAsRef %}{{opt.value | deref | toPascal}}{% else %}{{opt.value | knownPrimitives}}{% endif %}{% endlet %}{% endfor %}]

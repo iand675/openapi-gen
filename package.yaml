@@ -1,0 +1,119 @@
+name:                openapi-gen
+version:             0.1.0.0
+github:              "iand675/openapi-gen"
+license:             BSD3
+author:              "Ian Duncan"
+maintainer:          "ian@iankduncan.com"
+copyright:           "Ian Duncan"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/iand675/openapi-gen#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- aeson
+- aeson-pretty
+- attoparsec
+- binary
+- bytestring
+- deepseq
+- deriving-compat
+- directory
+- hashable
+- mtl
+- text
+- lens
+- mtl
+- transformers
+- unordered-containers
+- http-api-data
+- http-client
+- http-client-tls
+- http-types
+- http-conduit
+- http-media
+- conduit
+- lens
+- pandoc
+- exceptions
+- pretty-show
+- scientific
+- tagged
+- text-manipulate
+- time
+- vector
+- fastsum
+- filepath
+- fused-effects
+- fused-effects-lens
+- containers
+- json-pointy
+- yaml
+- ede
+- xmlbf
+- tasty-discover
+- tasty-quickcheck
+- QuickCheck
+- stm
+- uri-bytestring
+- uri-bytestring-aeson
+- unliftio-core
+- wai
+- wai-websockets
+- warp
+- websockets
+- http-types
+
+default-extensions:
+- ConstraintKinds
+- DeriveFunctor
+- DeriveFoldable
+- DeriveGeneric
+- FlexibleInstances
+- GeneralizedNewtypeDeriving
+- OverloadedStrings
+- MultiParamTypeClasses
+- QuasiQuotes
+- RecordWildCards
+- TypeApplications
+- FlexibleContexts
+- LambdaCase
+- ScopedTypeVariables
+- TypeOperators
+- UndecidableInstances
+- FunctionalDependencies
+
+library:
+  source-dirs: src
+
+executables:
+  openapi-gen-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - openapi-gen
+
+tests:
+  openapi-gen-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - openapi-gen

@@ -1,0 +1,7 @@
+      fromMaybe (throwError ("Unhandled content type in response." :: String)) $ mapAcceptMedia
+{% for contentType in match.contentTypes %}
+        {% if contentType.first %}[ {% else %}, {% endif %} ("{{contentType.key}}", {{match.typeName}}Response{{contentType.value.suffix }} <$> {{contentType.value.decoderFunction}} resp)
+{% else %}
+        [
+{% endfor %}
+        ]

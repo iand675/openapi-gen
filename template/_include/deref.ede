@@ -1,0 +1,1 @@
+{% let s = schema | deref %}{% if s %}{{s | toPascal}}{% else %}{{schema | show}}{% endif %}{% endlet %}

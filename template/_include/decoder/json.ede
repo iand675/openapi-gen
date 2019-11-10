@@ -1,0 +1,11 @@
+instance FromJSON {{type.value.typeName}} where
+  parseJSON = withObject "{{type.value.typeName}}" parseCtors
+    where
+      parseCtors o = {% for constructor in type.value.constructors %}{% if !constructor.first %} <|> {% endif %}parse{{constructor.value.constructorName}} o{% endfor %}
+      {% for constructor in type.value.constructors %}
+      parse{{constructor.value.constructorName}} o = do
+        {% for field in constructor.value.constructorFields %}
+        {{field.value.fieldName}} <- o {% if field.value.fieldNullable %}.:?{% else %}.:{% endif %} "{{field.value.fieldOriginalName}}"
+        {% endfor %}
+        pure {{constructor.value.constructorName}}{% if (constructor.value.constructorFields | length) > 0 %}{..}{% endif %}
+      {% endfor %}
